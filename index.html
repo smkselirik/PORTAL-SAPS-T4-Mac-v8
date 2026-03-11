@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Kemasukan Markah - SMK Selirik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Light blue gradient background */
+            background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header-pattern {
+            /* Royal blue with golden elegant abstract pattern overlay */
+            background-color: #27408B;
+            background-image: 
+                radial-gradient(circle at 100% 50%, transparent 20%, rgba(255, 215, 0, 0.15) 21%, rgba(255, 215, 0, 0.15) 34%, transparent 35%, transparent),
+                radial-gradient(circle at 0% 50%, transparent 20%, rgba(255, 215, 0, 0.2) 21%, rgba(255, 215, 0, 0.2) 34%, transparent 35%, transparent);
+            background-size: 60px 120px;
+            color: white;
+            border-bottom: 4px solid #FFD700;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <header class="header-pattern py-6 shadow-lg">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center md:justify-start gap-4">
+            <img src="https://i.ibb.co/Fqw3JnZ/logo.png" alt="Logo SMK Selirik" class="w-20 h-20 object-contain bg-white rounded-full p-1" onerror="this.src='https://via.placeholder.com/80?text=Logo'">
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wider text-yellow-400 drop-shadow-md">SMK SELIRIK, KAPIT</h1>
+                <h2 class="text-lg md:text-xl font-medium mt-1">Portal Kemasukan Markah Peperiksaan Pertengahan 1 (Mac)</h2>
+                <p class="text-sm md:text-base text-gray-200">Tingkatan 4 • Tahun 2026</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-5xl">
+        
+        <div id="loginSection" class="glass-card p-6 max-w-md mx-auto mb-8 transition-all">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Log Masuk Guru</h3>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="icNumber">
+                    No. Kad Pengenalan
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" id="icNumber" type="text" placeholder="Contoh: 800101010101">
+            </div>
+            <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                Semak & Log Masuk
+            </button>
+            <p id="loginError" class="text-red-500 text-sm mt-3 hidden text-center">ID tidak dijumpai. Sila cuba lagi.</p>
+        </div>
+
+        <div id="selectionSection" class="glass-card p-6 mb-8 hidden transition-all">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-800">Selamat Datang, <span id="teacherNameDisplay" class="text-blue-600"></span></h3>
+                <button onclick="logout()" class="text-sm bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded">Log Keluar</button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="subjectSelect">
+                    Pilih Subjek & Kelas
+                </label>
+                <select id="subjectSelect" class="shadow border rounded w-full py-3 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </select>
+            </div>
+            <button onclick="loadStudents()" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded focus:outline-none focus:shadow-outline transition duration-200">
+                Papar Senarai Pelajar
+            </button>
+        </div>
+
+        <div id="entrySection" class="glass-card p-6 mb-8 hidden transition-all overflow-x-auto">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Kemasukan Markah: <span id="currentSubjectClass" class="text-blue-600"></span></h3>
+            <div id="loadingText" class="text-center py-4 text-blue-500 font-semibold hidden">Memuat turun data pelajar dari Google Sheets...</div>
+            
+            <table class="w-full text-left border-collapse min-w-[600px]" id="studentsTable">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="p-3 border-b font-semibold text-gray-700 w-12">No.</th>
+                        <th class="p-3 border-b font-semibold text-gray-700">Nama Pelajar</th>
+                        <th class="p-3 border-b font-semibold text-gray-700 w-24 text-center">Tidak Hadir</th>
+                        <th class="p-3 border-b font-semibold text-gray-700 w-32">Markah</th>
+                        <th class="p-3 border-b font-semibold text-gray-700 w-24">Gred</th>
+                        <th class="p-3 border-b font-semibold text-gray-700 w-32">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="dashboardSection" class="glass-card p-6 mb-8 hidden transition-all overflow-x-auto">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Dashboard Semakan & Rekod Tempatan</h3>
+            <p class="text-sm text-gray-600 mb-4">Senarai di bawah adalah rekod yang telah anda simpan (tersimpan di dalam <i>Local Storage</i> peranti ini).</p>
+            
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                    <tr class="bg-blue-50">
+                        <th class="p-3 border-b font-semibold text-blue-800">Nama Pelajar</th>
+                        <th class="p-3 border-b font-semibold text-blue-800">Kelas & Subjek</th>
+                        <th class="p-3 border-b font-semibold text-blue-800">Markah</th>
+                        <th class="p-3 border-b font-semibold text-blue-800">Gred</th>
+                        <th class="p-3 border-b font-semibold text-blue-800 text-center">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody id="dashboardTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
+        <p class="text-sm">&copy; Hakcipta NDJE@Selirik, Kapit 2026</p>
+    </footer>
+
+    <script>
+        // --- DATA GURU ---
+        const teachers = [
+            { id: "850805135684", name: "NATALIE DAMIE ANAK JACOB ENGGAH", subjects: ["BAHASA INGGERIS 4ST1", "BAHASA INGGERIS 4A2", "BAHASA INGGERIS 4A4"] },
+            { id: "800530125085", name: "ARNOLD JUNIOR AUGUSTINE", subjects: ["BAHASA INGGERIS 4SN"] },
+            { id: "860129525618", name: "RUNA ANAK SANGGONG", subjects: ["BAHASA INGGERIS 4KAG", "BAHASA INGGERIS 4ST2"] },
+            { id: "981014135899", name: "GEORGE CHONG", subjects: ["BAHASA INGGERIS 4A3", "BAHASA INGGERIS 4ST3"] },
+            { id: "980627135299", name: "DARREN GILBERT ANAK KOH", subjects: ["BAHASA INGGERIS 4A1"] },
+            { id: "860805526983", name: "GRAY ANAK JOWIM@JOWIN", subjects: ["SEJARAH 4ST2", "SEJARAH 4A3", "SEJARAH 4A4"] },
+            { id: "911129136097", name: "AQKMAL HAZIM BIN MUD", subjects: ["SEJARAH 4ST3", "SEJARAH 4A2"] },
+            { id: "871226525496", name: "KAREN MAWAS ANAK ARAH", subjects: ["SEJARAH 4ST1", "SEJARAH 4KAG", "SEJARAH 4A1"] },
+            { id: "900620137707", name: "YONG KASI SIONG", subjects: ["SEJARAH 4SN"] },
+            { id: "800718135867", name: "KONG CHUNG SHING", subjects: ["SAINS 4ST3", "SAINS 4A4"] },
+            { id: "861122135080", name: "ALEXANRA ANAK ANDREW KANA", subjects: ["MATEMATIK TAMBAHAN 4SN"] },
+            { id: "920312135206", name: "ANDREA AK RIWIK", subjects: ["SAINS KOMPUTER 4SN"] },
+            { id: "961130135644", name: "ATHIASIA ANAK ENJANG", subjects: ["BAHASA MELAYU 4A1", "BAHASA MELAYU 4A2"] },
+            { id: "970825016670", name: "BRENDA AIMA ANAK JOSHUA MARIYAM", subjects: ["SAINS 4KAG", "SAINS 4ST1", "BIOLOGY 4SN"] },
+            { id: "860116525619", name: "MOHD CABERINI BIN LINANG", subjects: ["PENDIDIKAN SENI VISUAL 4A1", "PENDIDIKAN SENI VISUAL 4A3"] },
+            { id: "880504525432", name: "CECELIA ANAK JANES", subjects: ["PENGAJIAN PERNIAGAAN 4ST1"] },
+            { id: "920317036207", name: "CHE MOHD UDAIY BIN CHE ABDUL HADI", subjects: ["PHYSICS 4SN"] },
+            { id: "930112135956", name: "CHRISTINA ADANG ANAK RAMA", subjects: ["BAHASA MELAYU 4SN", "BAHASA MELAYU 4A4"] },
+            { id: "910722136085", name: "DESMOND ANAK LINGGI", subjects: ["BAHASA MELAYU 4KAG"] },
+            { id: "840607135430", name: "DIANA ANAK LIMBI", subjects: ["SAINS 4A1", "SAINS 4ST2"] },
+            { id: "990902135672", name: "ELLLSIE ANAK IRIN", subjects: ["REKA CIPTA 4ST2", "REKA CIPTA 4ST3"] },
+            { id: "900811136926", name: "ENDON ANAK BAKAR", subjects: ["PENDIDIKAN MORAL 4ST1", "PENDIDIKAN MORAL 4A1", "PENDIDIKAN MORAL 4A4"] },
+            { id: "010227130467", name: "GONZALES ANAK ABING", subjects: ["MATEMATIK 4SN", "MATEMATIK 4ST3", "MATEMATIK 4A1", "MATEMATIK 4A4", "MATEMATIK 4KAG"] },
+            { id: "940628135710", name: "JACINTA ANAK BUDIT", subjects: ["SAINS 4A2"] },
+            { id: "900219137495", name: "KENNY ANAK TAWAI", subjects: ["BAHASA MELAYU 4ST3"] },
+            { id: "920826136695", name: "MOHAMAD ZAID BIN ZAIDI", subjects: ["KIMPALAN ARKA & GAS 4KAG"] },
+            { id: "961018035889", name: "MOHAMAD FAZREEN BIN ZAINUDIN", subjects: ["PENDIDIKAN JASMANI & KESIHATAN 4ST2", "PENDIDIKAN JASMANI & KESIHATAN 4A4"] },
+            { id: "790311135404", name: "NORA ANAK ENGKOL", subjects: ["BAHASA MELAYU 4ST2"] },
+            { id: "930403135198", name: "NURUL SAMIZA BT ABANG", subjects: ["MATEMATIK 4ST1", "MATEMATIK 4A2", "MATEMATIK 4A3"] },
+            { id: "840910135126", name: "SANTI ANAK THOMAS NANANG", subjects: ["BAHASA IBAN 4ST2"] },
+            { id: "940318135694", name: "SIA KANG YEE", subjects: ["CHEMISTRY 4SN"] },
+            { id: "941126135627", name: "STANLEY ANAK TUNGKU", subjects: ["PENDIDIKAN SENI VISUAL 4A2", "PENDIDIKAN SENI VISUAL 4A4"] },
+            { id: "000628130602", name: "STEPHANIE ANAK HARWELL", subjects: ["PENDIDIKAN JASMANI & KESIHATAN 4A1", "PENDIDIKAN JASMANI & KESIHATAN 4KAG", "PENDIDIKAN MORAL 4ST3", "PENDIDIKAN MORAL 4A2", "PENDIDIKAN MORAL 4A3"] },
+            { id: "910306135868", name: "STEPHANIE ANAK JUKY", subjects: ["SAINS 4A3"] },
+            { id: "870404527095", name: "SYLVESTER ANAK ANTHONY GONG", subjects: ["REKA CIPTA 4ST1"] },
+            { id: "930903136162", name: "TRACY DIANALEE ANAK MERANG", subjects: ["PENDIDIKAN MORAL 4SN", "PENDIDIKAN MORAL 4ST2", "PENDIDIKAN JASMANI & KESIHATAN 4ST3", "PENDIDIKAN JASMANI & KESIHATAN 4A3"] },
+            { id: "730417055045", name: "WONG CHEE LOONG", subjects: ["MATEMATIK 4ST2"] },
+            { id: "920820135958", name: "WONG CHU SING", subjects: ["BAHASA MELAYU 4ST1", "BAHASA MELAYU 4A3"] }
+        ];
+
+        // --- MAPPING KOLUM SUBJEK UNTUK GOOGLE SHEET ---
+        const subjectColumns = {
+            "BAHASA MELAYU": "E", "BAHASA INGGERIS": "I", "SEJARAH": "G", "MATEMATIK": "K", 
+            "PENDIDIKAN MORAL": "M", "PENDIDIKAN ISLAM": "O", "SAINS": "Q", "SAINS KOMPUTER": "AI", 
+            "REKA CIPTA": "W", "PENDIDIKAN SENI VISUAL": "S", "KIMPALAN ARKA & GAS": "AK", 
+            "BIOLOGY": "AE", "PHYSICS": "AA", "CHEMISTRY": "AC", "MATEMATIK TAMBAHAN": "AG", 
+            "BAHASA IBAN": "U", "PENGAJIAN PERNIAGAAN": "Y", "PENGAJIAN PENIAGAAN": "Y", 
+            "PENDIDIKAN JASMANI & KESIHATAN": "BK"
+        };
+
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR831uDWcPfxf9zOj-mekolv_DMkdsYRMdVsxoLcKqwL88z-tetvP57ti5wB5M2dYIXYVZf9eX7R6Q8/pub?gid=1615224868&single=true&output=csv";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwUHEWsEWe1Eg1Qjn8aoX9ChDP8JftPwBRypjdOALbLeEtcuaHDYpS_xy73OSbxj3Lq/exec";
+
+        let currentTeacher = null;
+        let currentClassStr = "";
+        let currentBaseSubject = "";
+
+        // --- FUNGSI LOGIN & NAVIGATION ---
+        function login() {
+            const icInput = document.getElementById("icNumber").value.trim();
+            const teacher = teachers.find(t => t.id === icInput);
+            
+            if (teacher) {
+                currentTeacher = teacher;
+                document.getElementById("loginError").classList.add("hidden");
+                document.getElementById("loginSection").classList.add("hidden");
+                
+                document.getElementById("teacherNameDisplay").innerText = teacher.name;
+                
+                const select = document.getElementById("subjectSelect");
+                select.innerHTML = '<option value="" disabled selected>-- Sila Pilih --</option>';
+                teacher.subjects.forEach(sub => {
+                    select.innerHTML += `<option value="${sub}">${sub}</option>`;
+                });
+                
+                document.getElementById("selectionSection").classList.remove("hidden");
+                renderDashboard();
+            } else {
+                document.getElementById("loginError").classList.remove("hidden");
+            }
+        }
+
+        function logout() {
+            currentTeacher = null;
+            document.getElementById("icNumber").value = "";
+            document.getElementById("selectionSection").classList.add("hidden");
+            document.getElementById("entrySection").classList.add("hidden");
+            document.getElementById("dashboardSection").classList.add("hidden");
+            document.getElementById("loginSection").classList.remove("hidden");
+        }
+
+        // --- PARSING & LOADING DATA PELAJAR ---
+        async function loadStudents() {
+            const selectedOpt = document.getElementById("subjectSelect").value;
+            if (!selectedOpt) return alert("Sila pilih subjek dan kelas terlebih dahulu.");
+
+            document.getElementById("currentSubjectClass").innerText = selectedOpt;
+            document.getElementById("entrySection").classList.remove("hidden");
+            document.getElementById("loadingText").classList.remove("hidden");
+            document.getElementById("studentsTableBody").innerHTML = "";
+
+            // Pisahkan subjek dan kelas (Anggapan: Perkataan terakhir adalah nama kelas, cth: "BAHASA INGGERIS 4ST1")
+            const parts = selectedOpt.split(" ");
+            const targetClass = parts.pop(); 
+            currentClassStr = targetClass;
+            currentBaseSubject = parts.join(" ");
+
+            try {
+                const response = await fetch(CSV_URL);
+                const csvText = await response.text();
+                
+                // Parser CSV ringkas
+                const rows = csvText.split('\n').map(row => {
+                    // Handle comma inside quotes if any, simple split otherwise
+                    const regex = /(?:"([^"]*(?:""[^"]*)*)"|([^,]+))/g;
+                    let matches = [];
+                    let match;
+                    while (match = regex.exec(row)) {
+                        matches.push(match[1] ? match[1].replace(/""/g, '"') : match[2]);
+                    }
+                    return matches;
+                });
+
+                let count = 1;
+                let html = "";
+                
+                // Asal Column C (index 2) = Nama, Column D (index 3) = Kelas
+                // Skip header row (i=1)
+                for (let i = 1; i < rows.length; i++) {
+                    if(!rows[i] || rows[i].length < 4) continue;
+                    
+                    const studentName = rows[i][2] ? rows[i][2].trim() : "";
+                    const studentClass = rows[i][3] ? rows[i][3].trim() : "";
+
+                    if (studentClass === targetClass && studentName !== "") {
+                        // Generate unique ID based on name to store inputs
+                        const safeId = "input_" + count;
+                        html += `
+                            <tr class="hover:bg-gray-50 border-b">
+                                <td class="p-3">${count}</td>
+                                <td class="p-3 font-medium text-gray-800" id="name_${safeId}">${studentName}</td>
+                                <td class="p-3 text-center">
+                                    <input type="checkbox" id="th_${safeId}" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" onchange="toggleTH('${safeId}')">
+                                </td>
+                                <td class="p-3">
+                                    <input type="number" id="mark_${safeId}" min="0" max="100" class="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateGrade('${safeId}')" placeholder="0-100">
+                                </td>
+                                <td class="p-3">
+                                    <span id="grade_${safeId}" class="font-bold text-lg text-gray-600">-</span>
+                                </td>
+                                <td class="p-3">
+                                    <button onclick="simpanDanHantar('${safeId}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded shadow transition">Simpan & Hantar</button>
+                                </td>
+                            </tr>
+                        `;
+                        count++;
+                    }
+                }
+
+                if(count === 1) {
+                    html = `<tr><td colspan="6" class="p-4 text-center text-red-500">Tiada pelajar dijumpai untuk kelas ${targetClass} dalam fail pangkalan data.</td></tr>`;
+                }
+
+                document.getElementById("studentsTableBody").innerHTML = html;
+
+            } catch (error) {
+                alert("Ralat memuat turun data pelajar: " + error.message);
+            } finally {
+                document.getElementById("loadingText").classList.add("hidden");
+            }
+        }
+
+        // --- LOGIK GRED ---
+        function getGrade(markah) {
+            if (markah === "TH") return "TH";
+            let m = parseFloat(markah);
+            if (isNaN(m)) return "-";
+            if (m >= 90) return "A+";
+            if (m >= 80) return "A";
+            if (m >= 70) return "A-";
+            if (m >= 65) return "B+";
+            if (m >= 60) return "B";
+            if (m >= 55) return "C+";
+            if (m >= 50) return "C";
+            if (m >= 45) return "D";
+            if (m >= 40) return "E";
+            return "G";
+        }
+
+        function updateGrade(id) {
+            const markInput = document.getElementById(`mark_${id}`).value;
+            const gradeSpan = document.getElementById(`grade_${id}`);
+            gradeSpan.innerText = getGrade(markInput);
+            
+            // Color coding
+            gradeSpan.className = "font-bold text-lg " + (getGrade(markInput) === "G" ? "text-red-500" : "text-green-600");
+        }
+
+        function toggleTH(id) {
+            const isTH = document.getElementById(`th_${id}`).checked;
+            const markInput = document.getElementById(`mark_${id}`);
+            const gradeSpan = document.getElementById(`grade_${id}`);
+            
+            if (isTH) {
+                markInput.value = "";
+                markInput.disabled = true;
+                markInput.classList.add("bg-gray-200");
+                gradeSpan.innerText = "TH";
+                gradeSpan.className = "font-bold text-lg text-orange-500";
+            } else {
+                markInput.disabled = false;
+                markInput.classList.remove("bg-gray-200");
+                updateGrade(id); // reset back to normal
+            }
+        }
+
+        // --- SIMPAN & HANTAR DATA ---
+        function simpanDanHantar(rowId) {
+            const name = document.getElementById(`name_${rowId}`).innerText;
+            const isTH = document.getElementById(`th_${rowId}`).checked;
+            const markInput = document.getElementById(`mark_${rowId}`).value;
+            
+            if (!isTH && markInput === "") {
+                return alert("Sila masukkan markah atau tanda 'Tidak Hadir' (TH).");
+            }
+
+            const markahFinal = isTH ? "TH" : markInput;
+            const gredFinal = getGrade(markahFinal);
+            const targetColumn = subjectColumns[currentBaseSubject] || "";
+
+            // 1. Hantar ke Google Sheet (Apps Script)
+            // Memandangkan Apps Script Web App memerlukan param URL atau formData
+            // Kita bina URL dengan queryString untuk dihantar
+            const payload = new URLSearchParams({
+                nama: name,
+                kelas: currentClassStr,
+                subjek: currentBaseSubject,
+                markah: markahFinal,
+                gred: gredFinal,
+                kolum: targetColumn,
+                guru: currentTeacher.name
+            });
+
+            // Guna no-cors kerana Google script selalunya tidak membenarkan CORS request dari origin luar 
+            // secara direct tanpa setup khas.
+            fetch(GAS_WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: payload
+            }).then(() => {
+                // 2. Simpan ke LocalStorage
+                simpanKeLocal(name, currentClassStr, currentBaseSubject, markahFinal, gredFinal);
+                alert(`Data berjaya disimpan dan dihantar untuk ${name}.`);
+                renderDashboard();
+            }).catch(err => {
+                alert("Terdapat masalah menghantar data ke Google Sheet. Sila cuba lagi.");
+            });
+        }
+
+        // --- PENGURUSAN LOCAL STORAGE (DASHBOARD) ---
+        function getLocalData() {
+            const data = localStorage.getItem('rekodMarkah2026');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function simpanKeLocal(nama, kelas, subjek, markah, gred) {
+            let records = getLocalData();
+            // Semak jika pelajar & subjek sama sudah wujud, kita kemaskini
+            const index = records.findIndex(r => r.nama === nama && r.subjek === subjek);
+            if (index !== -1) {
+                records[index] = { nama, kelas, subjek, markah, gred, timestamp: new Date().getTime() };
+            } else {
+                records.push({ nama, kelas, subjek, markah, gred, timestamp: new Date().getTime() });
+            }
+            localStorage.setItem('rekodMarkah2026', JSON.stringify(records));
+        }
+
+        function hapusRekod(nama, subjek) {
+            if(!confirm(`Adakah anda pasti mahu menghapus rekod tempatan untuk ${nama}?`)) return;
+            let records = getLocalData();
+            records = records.filter(r => !(r.nama === nama && r.subjek === subjek));
+            localStorage.setItem('rekodMarkah2026', JSON.stringify(records));
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            if(!currentTeacher) return;
+            const records = getLocalData();
+            
+            // Tapis hanya rekod yang berkaitan dengan subjek guru ini
+            const myRecords = records.filter(r => currentTeacher.subjects.includes(`${r.subjek} ${r.kelas}`));
+
+            const tbody = document.getElementById("dashboardTableBody");
+            tbody.innerHTML = "";
+
+            if (myRecords.length > 0) {
+                document.getElementById("dashboardSection").classList.remove("hidden");
+                myRecords.forEach(r => {
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 text-sm">${r.nama}</td>
+                            <td class="p-3 text-sm">${r.subjek} ${r.kelas}</td>
+                            <td class="p-3 font-semibold">${r.markah}</td>
+                            <td class="p-3 font-bold ${r.gred === 'G' ? 'text-red-500' : (r.gred === 'TH' ? 'text-orange-500' : 'text-green-600')}">${r.gred}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="hapusRekod('${r.nama}', '${r.subjek}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded transition">Hapus Rekod Semasa</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                // Sembunyi jika tiada rekod
+                document.getElementById("dashboardSection").classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
